@@ -1,12 +1,12 @@
 {
   "canisters": {
     "message_board": {
-      "main": "src/index.ts",
+      "main": "src/unique-icp-canister.ts",
       "type": "custom",
       "build": "npx azle message_board",
       "root": "src",
-      "ts": "src/index.ts",
-      "candid": "src/index.did",
+      "ts": "src/unique-icp-canister.ts",
+      "candid": "src/unique-icp-canister.did",
       "wasm": ".azle/message_board/message_board.wasm.gz"
     }
   }
