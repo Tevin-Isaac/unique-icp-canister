@@ -1,6 +1,4 @@
-import { $query, $update, Record, StableBTreeMap, Vec, match, Result, nat64, ic, Opt } from 'azle';
-import { v4 as uuidv4 } from 'uuid';
-
+import { $update, Record, StableBTreeMap, ic } from 'azle';
 
 // Define the Vote record type
 type Vote = Record<{
@@ -17,31 +15,35 @@ const voteStorage = new StableBTreeMap<string, Vote>(0, 44, 1024);
  * Casts a vote for a candidate.
  * @param voterId - The ID of the voter.
  * @param candidate - The chosen candidate.
- * @returns A Result indicating success or failure along with the vote record.
+ * @returns The vote record or throws an error if the voter has already voted or inputs are invalid.
  */
 $update;
-export function vote(voterId: string, candidate: string): Result<Vote, string> {
-    // Check if the user has already voted
-    if (hasUserVoted(voterId)) {
-        return Result.Err<Vote, string>(`User with id=${voterId} has already voted.`);
+export function vote(voterId: string, candidate: string): Vote {
+    // Validate inputs
+    if (!voterId || !candidate) {
+        throw Error("Invalid voterId or candidate.");
     }
 
-    const vote: Vote = { id: uuidv4(), voterId, candidate, createdAt: ic.time() };
-    
+    // Check if the user has already voted
+    if (hasUserVoted(voterId)) {
+        throw Error(`User with id=${voterId} has already voted.`);
+    }
+
+    const vote: Vote = { id: ic.time().toString(), voterId, candidate, createdAt: ic.time() };
+
     // Insert the vote into the storage
     voteStorage.insert(vote.id, vote);
-    
-    // Return the result with the vote record
-    return Result.Ok(vote);
+
+    return vote;
 }
 
 /**
  * Retrieves the total number of votes.
- * @returns A Result containing the total number of votes or an error message.
+ * @returns The total number of votes.
  */
-$query;
-export function getTotalVotes(): Result<number, string> {
-    return Result.Ok(voteStorage.values().length);
+$update;
+export function getTotalVotes(): number {
+    return voteStorage.values().length;
 }
 
 /**
@@ -49,7 +51,6 @@ export function getTotalVotes(): Result<number, string> {
  * @param voterId - The ID of the voter.
  * @returns A boolean indicating whether the user has voted.
  */
-$query;
 export function hasUserVoted(voterId: string): boolean {
     return voteStorage.values().some(vote => vote.voterId === voterId);
 }
