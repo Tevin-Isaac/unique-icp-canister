@@ -1,4 +1,6 @@
-import { $update, Record, StableBTreeMap, ic } from 'azle';
+
+import { $update, Record, StableBTreeMap, ic, nat64 } from 'azle';
+import { v4 as uuidv4 } from "uuid";
 
 // Define the Vote record type
 type Vote = Record<{
@@ -29,13 +31,27 @@ export function vote(voterId: string, candidate: string): Vote {
         throw Error(`User with id=${voterId} has already voted.`);
     }
 
-    const vote: Vote = { id: ic.time().toString(), voterId, candidate, createdAt: ic.time() };
+    const vote: Vote = { 
+        id: uuidv4(), 
+        voterId,
+        candidate,
+        createdAt: ic.time()
+     };
 
-    // Insert the vote into the storage
-    voteStorage.insert(vote.id, vote);
+    try {
+        // Insert the vote into the storage
+        voteStorage.insert(vote.id, vote);
+        return vote;
+    } catch (error) {
+        // Handle the error
+        console.error("Error occurred during vote insertion:", error);
+        // Optionally, throw the error again to propagate it to the caller
+        throw Error("Error occurred during vote insertion:");
+    }
 
-    return vote;
+
 }
+    
 
 /**
  * Retrieves the total number of votes.
@@ -43,7 +59,12 @@ export function vote(voterId: string, candidate: string): Vote {
  */
 $update;
 export function getTotalVotes(): number {
-    return voteStorage.values().length;
+    try {
+        return voteStorage.values().length;
+    } catch (error) {
+        console.error('An error occurred while getting the total votes:', error);
+        return 0;
+    }
 }
 
 /**
@@ -52,5 +73,26 @@ export function getTotalVotes(): number {
  * @returns A boolean indicating whether the user has voted.
  */
 export function hasUserVoted(voterId: string): boolean {
-    return voteStorage.values().some(vote => vote.voterId === voterId);
+    try {
+        return voteStorage.values().some(vote => vote.voterId === voterId);
+    } catch (error) {
+        console.error("Error occurred during vote retrieval:", error);
+        throw Error("Error occurred during vote retrieval:");
+    }
 }
+
+
+globalThis.crypto = {
+    //@ts-ignore
+    getRandomValues: () => {
+      let array = new Uint8Array(32);
+  
+      for (let i = 0; i < array.length; i++) {
+        array[i] = Math.floor(Math.random() * 256);
+      }
+  
+      return array;
+    },
+  };
+  
+  
