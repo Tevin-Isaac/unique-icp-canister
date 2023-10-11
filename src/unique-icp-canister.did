@@ -1,0 +1,10 @@
+type Vote = record {
+  id : text;
+  createdAt : nat64;
+  voterId : text;
+  candidate : text;
+};
+service : () -> {
+  getTotalVotes : () -> (float64);
+  vote : (text, text) -> (Vote);
+}
